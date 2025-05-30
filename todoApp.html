@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Todo App</title>
+    <style>
+      /* ────────────── 기본 레이아웃 ────────────── */
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+      }
+
+      body {
+        font-family: "Segoe UI", Roboto, "Noto Sans KR", sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: #d6fbe4
+          url("https://external-preview.redd.it/r6g38aXSaQWtd1KxwJbQ-Fs5jtSVDxX3wtLHJEdqixw.jpg?auto=webp&s=fdee18de73d4f642ccc323470e044ed0f1bae7ea")
+          no-repeat center/cover; /* 임시 배경 이미지 */
+      }
+
+      /* ────────────── 중심 컨테이너 ────────────── */
+      #app {
+        text-align: center;
+        color: #ffffff;
+        text-shadow: 0 0 4px rgba(0, 0, 0, 0.4);
+        max-width: 600px;
+        width: 90%;
+      }
+
+      /* ────────────── 시계 ────────────── */
+      #clock {
+        font-size: 4rem;
+        margin: 0;
+      }
+
+      /* ────────────── 인사말 ────────────── */
+      #greeting {
+        font-size: 2rem;
+        margin: 0 0 1rem;
+      }
+
+      /* ────────────── Todo 입력 ────────────── */
+      #todo-input {
+        width: 100%;
+        max-width: 400px;
+        padding: 0.6rem 1rem;
+        font-size: 1rem;
+        border: none;
+        border-radius: 6px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+        outline: none;
+      }
+
+      /* ────────────── Todo 리스트 ────────────── */
+      #todo-list {
+        list-style: none;
+        padding: 0;
+        margin: 1.2rem 0 0;
+      }
+
+      #todo-list li {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 0.5rem;
+        margin: 0.4rem 0;
+      }
+
+      .todo-text {
+        font-size: 1.1rem;
+        word-break: break-all;
+      }
+
+      .delete-btn {
+        background: transparent;
+        border: none;
+        color: #ffffff;
+        font-size: 1.2rem;
+        cursor: pointer;
+        transition: transform 0.15s ease;
+      }
+
+      .delete-btn:hover {
+        transform: scale(1.2);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <h1 id="clock"></h1>
+      <h2 id="greeting">안녕하세요</h2>
+
+      <form id="todo-form" autocomplete="off">
+        <input
+          type="text"
+          id="todo-input"
+          placeholder="Write a To Do and Press Enter!"
+        />
+      </form>
+
+      <ul id="todo-list"></ul>
+    </div>
+
+    <script>
+      /* ────────────── 시계 기능 ────────────── */
+      const clockEl = document.getElementById("clock");
+
+      function updateClock() {
+        const now = new Date();
+        const h = String(now.getHours()).padStart(2, "0");
+        const m = String(now.getMinutes()).padStart(2, "0");
+        const s = String(now.getSeconds()).padStart(2, "0");
+        clockEl.textContent = `${h}:${m}:${s}`;
+      }
+
+      updateClock();
+      setInterval(updateClock, 1000);
+
+      /* ────────────── Todo 기능 ────────────── */
+      const TODOS_KEY = "momentum_todos";
+
+      const form = document.getElementById("todo-form");
+      const input = document.getElementById("todo-input");
+      const list = document.getElementById("todo-list");
+
+      let todos = [];
+
+      // ───── 저장 & 불러오기 헬퍼 ─────
+      function saveTodos() {
+        localStorage.setItem(TODOS_KEY, JSON.stringify(todos));
+      }
+
+      function loadTodos() {
+        const saved = localStorage.getItem(TODOS_KEY);
+        if (!saved) return;
+        try {
+          todos = JSON.parse(saved);
+          todos.forEach(paintTodo);
+        } catch (e) {
+          console.error("JSON parse error", e);
+        }
+      }
+
+      // ───── Todo 렌더링 ─────
+      function paintTodo(todoObj) {
+        const li = document.createElement("li");
+        li.id = todoObj.id;
+
+        const span = document.createElement("span");
+        span.className = "todo-text";
+        span.textContent = todoObj.text;
+
+        const btn = document.createElement("button");
+        btn.className = "delete-btn";
+        btn.textContent = "✕";
+        btn.addEventListener("click", () => deleteTodo(li.id));
+
+        li.appendChild(span);
+        li.appendChild(btn);
+        list.appendChild(li);
+      }
+
+      // ───── Todo 추가 ─────
+      form.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const text = input.value.trim();
+        if (text === "") return;
+
+        const todoObj = {
+          id: Date.now(),
+          text,
+        };
+        todos.push(todoObj);
+        paintTodo(todoObj);
+        saveTodos();
+        input.value = "";
+      });
+
+      // ───── Todo 삭제 ─────
+      function deleteTodo(id) {
+        const li = document.getElementById(id);
+        if (li) li.remove();
+        todos = todos.filter((t) => t.id !== Number(id));
+        saveTodos();
+      }
+
+      // ───── 초기화 ─────
+      loadTodos();
+    </script>
+  </body>
+</html>
